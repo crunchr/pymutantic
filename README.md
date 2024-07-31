@@ -6,7 +6,7 @@ User-friendly tool for combining [pycrdt](https://github.com/jupyter-server/pycr
 
 * `pymutantic.mutant.MutantModel` - A type safe `pycrdt.Doc` ⟷ pydantic `pydantic.BaseModel` mapping with granular editing.
 * `pymutantic.json_path.JsonPathMutator` - Make edits using json path.
-* `pymutantic.migrate.JsonPathMutator` - Granular migration edits between model versions.
+* `pymutantic.migrate.MigrationChain` - Granular migration edits between model versions.
 
 ## Installation
 
