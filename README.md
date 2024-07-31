@@ -10,7 +10,7 @@ User-friendly tool for combining [pycrdt](https://github.com/jupyter-server/pycr
 ## Installation
 
 ```bash
-pip install pycrdt-utils
+pip install pymutantic
 ```
 
 ## Usage
