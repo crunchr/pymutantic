@@ -1,8 +1,10 @@
+# 3rd party
 import pytest
+from pydantic import BaseModel, Field
 
-from pydantic import Field, BaseModel
-
-from pymutantic import MutantModel, JsonPathMutator
+# 1st party
+from pymutantic.json_path import JsonPathMutator
+from pymutantic.mutant import MutantModel
 
 
 class Author(BaseModel):

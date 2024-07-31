@@ -1,9 +1,10 @@
-import contextlib
+# std
 import dataclasses
 import typing
 
-from munch import Munch
-from pycrdt import Doc, Map, Array, Transaction
+# 3rd party
+from munch import Munch  # type: ignore
+from pycrdt import Array, Doc, Map, Transaction
 from pydantic import BaseModel
 
 
@@ -52,7 +53,7 @@ class ArrayProxy(list):
         super().insert(index, object)
         self._root.insert(index, to_crdt(object))
 
-    def pop(self, index: int = -1):
+    def pop(self, index: typing.SupportsIndex = -1):
         super().pop(index)
         self._root.pop(index)
 
@@ -80,21 +81,23 @@ def wrap(root, o):
             return o
 
 
-Model = typing.TypeVar("Model")
+PydanticModel = typing.TypeVar("PydanticModel")
 
 
 @dataclasses.dataclass
-class MutateContextManager(typing.Generic[Model]):
-    _mutant: 'MutantModel'
+class MutateInTransaction(typing.Generic[PydanticModel]):
+    _mutant: "MutantModel"
     _txn: Transaction = dataclasses.field(init=False)
 
-    def __enter__(self) -> Model:
+    def __enter__(self) -> PydanticModel:
         root = self._mutant._root
-        state = Munch(self._mutant.ConcreteModel.model_validate(root.to_py()).model_dump())
+        state = Munch(
+            self._mutant.ConcreteModel.model_validate(root.to_py()).model_dump()
+        )
         # Here we are lying to the type system - this is actually a ModelProxy
         # object, but since we went via model_validate -> model_dump it will match
-        # the given schema. This is useful for example for autocomplete in your IDE
-        wrapped: Model = wrap(root, state)
+        # the given model. This is useful for example for autocomplete in your IDE
+        wrapped: PydanticModel = wrap(root, state)
         self._txn = self._mutant._doc.transaction().__enter__()
         return wrapped
 
@@ -102,21 +105,23 @@ class MutateContextManager(typing.Generic[Model]):
         self._txn.__exit__(exc_type, exc_val, exc_tb)
 
 
-class MutantModel(typing.Generic[Model]):
+class MutantModel(typing.Generic[PydanticModel]):
     """
     A type safe `pycrdt.Doc` ⟷ pydantic `pydantic.BaseModel` mapping with granular editing.
     """
 
     ROOT_KEY = "__root__"
-    _doc = Doc()
 
     def __init__(
         self,
         *,
         update: bytes | None = None,
-        updates: tuple[bytes] = (),
-        state: Model | None = None,
+        updates: tuple[bytes, ...] = (),
+        state: PydanticModel | None = None,
     ):
+        self._doc = Doc()
+        self._ConcreteModel = None
+
         # Ensure only one of `update`, `updates`, or `state` is provided
         provided_args = [update is not None, bool(updates), state is not None]
         if sum(provided_args) > 1:
@@ -153,21 +158,21 @@ class MutantModel(typing.Generic[Model]):
         """
         self._doc.apply_update(value)
 
-    def mutate(self) -> MutateContextManager[Model]:
+    def mutate(self) -> MutateInTransaction[PydanticModel]:
         """
         Apply mutations to the root key of the document.
         """
-        return MutateContextManager(self)
+        return MutateInTransaction(self)
 
     @property
-    def state(self) -> Model:
+    def state(self) -> PydanticModel:
         """
         Get an instance of Model that represents the current state of the CRDT.
         """
         return self.ConcreteModel.model_validate(self._root.to_py())
 
     @state.setter
-    def state(self, value: Model):
+    def state(self, value: PydanticModel):
         """
         Set the current state of the CRDT from an instance Model.
 
@@ -181,4 +186,18 @@ class MutantModel(typing.Generic[Model]):
         """
         Get the ConcreteModel pydantic model.
         """
-        return typing.get_args(self.__orig_class__)[0]
+        if self._ConcreteModel is None:
+            return typing.get_args(self.__orig_class__)[0]
+        else:
+            return self._ConcreteModel
+
+    @ConcreteModel.setter
+    def ConcreteModel(self, value: typing.Type[BaseModel]):
+        """
+        Set the ConcreteModel pydantic model.
+
+        Mostly the ConcreteModel should come from a type parameter
+        e.g. MutantModel[MyModel] but sometimes the exact model might be
+        dynamic, and so cannot be used as a type parameter.
+        """
+        self._ConcreteModel = value

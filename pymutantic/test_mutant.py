@@ -1,8 +1,9 @@
+# 3rd party
 import pytest
+from pydantic import BaseModel, Field
 
-from pydantic import Field, BaseModel
-
-from pymutantic import MutantModel
+# 1st party
+from pymutantic.mutant import MutantModel
 
 
 class Author(BaseModel):

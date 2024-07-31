@@ -1,0 +1,24 @@
+#!/bin/bash
+
+set -e
+
+echo "qa"
+pytest . && black . && isort .
+
+echo "bump version"
+# expect command line of patch|minor|major
+poetry version $1
+VERSION=`poetry version -s`
+echo $VERSION
+
+echo "Update repository"
+git add pyproject.toml
+git commit -m -S "$VERSION"
+git tag "$VERSION"
+git push origin "$VERSION"
+git push origin HEAD
+
+# build and publish to pypi
+echo "build and publish to pypi"
+poetry build
+poetry publish

@@ -1,7 +1,9 @@
+# std
 import dataclasses
 import typing
 
-import jsonpath_ng
+# 3rd party
+import jsonpath_ng  # type: ignore
 
 Model = typing.TypeVar("Model")
 
