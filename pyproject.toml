@@ -17,8 +17,12 @@ black = "^24.4.2"
 toolz = "^0.12.1"
 mypy = "^1.11.1"
 isort = "^5.13.2"
+flake8 = "^7.1.0"
 
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[mypy]
+plugins = "pydantic.mypy"

@@ -187,6 +187,7 @@ class MutantModel(typing.Generic[PydanticModel]):
         Get the ConcreteModel pydantic model.
         """
         if self._ConcreteModel is None:
+            assert hasattr(self, "__orig_class__")
             return typing.get_args(self.__orig_class__)[0]
         else:
             return self._ConcreteModel

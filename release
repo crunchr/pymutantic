@@ -3,7 +3,10 @@
 set -e
 
 echo "qa"
-pytest . && black . && isort .
+# linting / formatting
+black . && isort .
+# type checking / testing
+mypy . --check-untyped-defs --allow-redefinition && pytest .
 
 echo "bump version"
 # expect command line of patch|minor|major

@@ -22,41 +22,28 @@ To = typing.TypeVar("To", bound=VersionProtocol)
 
 
 @dataclasses.dataclass
-class Migration:
+class ModelVersionRegistry:
     model_versions: list[typing.Type[VersionProtocol]]
-    instance: MutantModel
 
-    def to(self, /, to: typing.Type[To]) -> MutantModel[To]:
-        """
-        Migrate self.instance to the given model version.
-        """
-        from_version_index = self.model_versions.index(self.instance.ConcreteModel)
+    def migrate(self, instance: MutantModel, *, to: typing.Type[To]) -> MutantModel[To]:
+
+        from_version_index = self.model_versions.index(instance.ConcreteModel)
         to_version_index = self.model_versions.index(to)
 
         if from_version_index < to_version_index:
-            # Upgrade
             slicer = slice(from_version_index + 1, to_version_index + 1)
             direction = 1
         else:
-            # Downgrade
             slicer = slice(from_version_index, to_version_index, -1)
             direction = -1
 
-        with self.instance.mutate() as state:
+        with instance.mutate() as state:
             for ModelVersion in self.model_versions[slicer]:
                 fn = ModelVersion.up if direction == 1 else ModelVersion.down
                 fn(state, state)
                 state.schema_version += direction
 
-        result = MutantModel[To](update=self.instance.update)
+        result = MutantModel[To](update=instance.update)
         result.ConcreteModel = to
 
         return result
-
-
-@dataclasses.dataclass
-class MigrationChain:
-    model_versions: list[typing.Type[VersionProtocol]]
-
-    def __call__(self, instance: MutantModel):
-        return Migration(self.model_versions, instance)

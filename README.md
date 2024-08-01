@@ -6,7 +6,14 @@ User-friendly tool for combining [pycrdt](https://github.com/jupyter-server/pycr
 
 * `pymutantic.mutant.MutantModel` - A type safe `pycrdt.Doc` ⟷ pydantic `pydantic.BaseModel` mapping with granular editing.
 * `pymutantic.json_path.JsonPathMutator` - Make edits using json path.
-* `pymutantic.migrate.MigrationChain` - Granular migration edits between model versions.
+* `pymutantic.migrate.ModelVersionRegistry` - Store a chain of versions for making granular schema migration edits.
+
+### Why do I want this?
+
+The idea behind pymutantic is to provide views over the CRDT in the form of a pydantic model that you specify. There are two types of views:
+
+* **Read only**: Inspect the state of the underlying CRDT with a frozen version of the pydantic model you specify. This model is read only, any changes are not reflected back to the CRDT (TODO: find a way to make this actually mutable)
+* **Mutable**: Make granular mutations to the data using a typed and mutable view over the underlying CRDT. Operations on this view are automatically synced with the underlying CRDT. 
 
 ## Installation
 
@@ -45,7 +52,7 @@ class BlogPageConfig(BaseModel):
     posts: List[Post] = Field(default_factory=list)
 ```
 
-Create pycrdt documents from instances of that model using the `state` constructor parameter:
+#### Create pycrdt documents from instances of that model using the `state` constructor parameter:
 
 ```python
 from pycrdt_utils import MutantModel
@@ -66,11 +73,13 @@ initial_state = BlogPageConfig(
 
 # Create a CRDT document with the initial state
 doc = MutantModel[BlogPageConfig](state=initial_state)
-
-print(doc.state)
 ```
 
-The `state` property will give you an instance of your chosen pydantic model:
+#### Get an immutable view (in the form of an instance of the pydantic model you specified) using the `state` property:
+
+```python
+print(doc.state)
+```
 
 ```text
 BlogPageConfig(
@@ -87,7 +96,7 @@ BlogPageConfig(
 )
 ```
 
-Make granular edits with the `mutate` function (applied within a transaction):
+#### Make granular edits with the `mutate` function (applied within a transaction):
 
 ```python
 # Mutate the document
@@ -103,7 +112,7 @@ print(doc.state)
 ```
 
 ```
-BBlogPageConfig(
+BlogPageConfig(
     collection='tech',
     posts=[
         Post(
@@ -123,28 +132,37 @@ BBlogPageConfig(
 )
 ```
 
-As far as your editor and other type aware tooling is concerned, when you call `mutate` the returned `state` object is simply an instance of the pydantic model that you specificied as a type parameter:
+#### Type check your code to prevent errors: 
+
+```python
+empty_state = BlogPageConfig.model_validate({"collection": "empty", "posts": []})
+doc = MutantModel[BlogPageConfig](state=empty_state)
+doc.state.psts
+```
+
+```bash
+$ mypy . --check-untyped-defs --allow-redefinition
+```
+
+![error](error.png)
+
+#### Use your IDE for a comfortable developer experience:
 
 ![autocomplete](autocomplete.png)
 
-The reason why you want to make granular edits is so that these granular edits can be syncronised with other concurrent edits. If we would replace the entire object in the CRDT that would potentially overwrite edits made by other actors. The design philosophy of this library is to always make the smallest edit you can. While CRDTs are powerful tools for synchronising mutliple edits, when two concurrent actors edit the same piece of granular data, one of those edits must win. Therefore we want to keep edits as small as possible to reduce the risk of that happening.
-
-### CRDT update
-
-Get a binary update blob from the CRDT, for example for sending over the wire to other peers:
+#### Get a binary update blob from the CRDT, for example for sending over the wire to other peers:
 
 ```python
 binary_update_blob: bytes = doc.update
 ```
 
-Instantiate documents from a binary update blob (or multiple using the `updates` parameter which accepts a list of update blobs):
+#### Instantiate documents from a binary update blob (or multiple using the `updates` parameter which accepts a list of update blobs):
 
 ```python
 doc = MutantModel[BlogPageConfig](update=received_binary_update_blob)    
 ```
 
-Apply another binary update blob, by setting the `update` property:
-
+#### Apply more binary updates, by setting the `update` property:
 
 ```python
 doc.update = another_received_binary_update_blob
@@ -164,10 +182,9 @@ with doc.mutate() as state:
 print(doc.state)
 ```
 
-### `MigrationChain` (experimental)
+### `ModelVersionRegistry` (experimental)
 
-It is also possible to apply granular schema migration edits using the `MigrationChain` class. By storing multiple versions of a Model and implementing `up` and `down` functions (which in fact are making granular migrations) schema migrations can also be synchronized with other concurrent edits:
-
+It is also possible to apply granular schema migration edits using the `ModelVersionRegistry` class. By storing multiple versions of a Model and implementing `up` and `down` functions (which in fact are making granular migrations) schema migrations can also be synchronized with other concurrent edits:
 
 ```python
 class ModelV1(BaseModel):
@@ -195,22 +212,22 @@ class ModelV2(BaseModel):
     @classmethod
     def down(cls, state: "ModelV2", new_state: ModelV1):
         new_state.field = "default"
-        
-        
-from pymutantic.migrate import MigrationChain
 
-migrate = MigrationChain([ModelV1, ModelV2])
+
+from pymutantic.migrate import ModelVersionRegistry
+
+migrate = ModelVersionRegistry([ModelV1, ModelV2])
 
 doc = MutantModel[ModelV1](state=ModelV1(field="hello", some_field="world"))
 
 # Make an independent edit
-doc_copy = MutantModel[ModelV1](update=doc.update)
-with doc_copy.mutate() as state:
+edit = MutantModel[ModelV1](update=doc.update)
+with edit.mutate() as state:
     state.some_field = "earth"
 
-# Migrate the original document to V5, and apply the independent edit
-doc = migrate(doc).to(ModelV2)
-doc.update = doc_copy.update
+# Migrate and apply the independent edit
+doc = migrate(doc, to=ModelV2)
+doc.update = edit.update
 ```
 
 ```text

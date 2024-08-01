@@ -6,7 +6,7 @@ import pytest
 from pydantic import BaseModel
 
 # 1st party
-from pymutantic.migrate import MigrationChain
+from pymutantic.migrate import ModelVersionRegistry
 from pymutantic.mutant import MutantModel
 
 
@@ -82,12 +82,12 @@ class ModelV5(BaseModel):
         del state.yet_another_field
 
 
-migrate = MigrationChain([ModelV1, ModelV2, ModelV3, ModelV4, ModelV5])
+migrate = ModelVersionRegistry([ModelV1, ModelV2, ModelV3, ModelV4, ModelV5]).migrate
 
 
 def test_migration_v1_to_v3():
     doc = MutantModel[ModelV1](state=ModelV1(field="hello", some_field="world"))
-    doc = migrate(doc).to(ModelV3)
+    doc = migrate(doc, to=ModelV3)
     assert doc.state.schema_version == 3
     assert doc.state.some_field == "world"
     assert doc.state.some_new_field == 42.0
@@ -95,7 +95,7 @@ def test_migration_v1_to_v3():
 
 def test_migration_v3_to_v1():
     doc = MutantModel[ModelV3](state=ModelV3(some_field="world", some_new_field=42.0))
-    doc = migrate(doc).to(ModelV1)
+    doc = migrate(doc, to=ModelV1)
     assert doc.state.schema_version == 1
     assert doc.state.field == "default"  # Default value added in down migration
     assert doc.state.some_field == "world"
@@ -103,7 +103,7 @@ def test_migration_v3_to_v1():
 
 def test_migration_v2_to_v4():
     doc = MutantModel[ModelV2](state=ModelV2(some_field="world"))
-    doc = migrate(doc).to(ModelV4)
+    doc = migrate(doc, to=ModelV4)
     assert doc.state.schema_version == 4
     assert doc.state.some_field == "world"
     assert doc.state.some_new_field == 42.0
@@ -114,14 +114,14 @@ def test_downgrade_v4_to_v2():
     doc = MutantModel[ModelV4](
         state=ModelV4(some_field="world", some_new_field=42.0, another_new_field=True)
     )
-    doc = migrate(doc).to(ModelV2)
+    doc = migrate(doc, to=ModelV2)
     assert doc.state.schema_version == 2
     assert doc.state.some_field == "world"
 
 
 def test_migration_v3_to_v5():
     doc = MutantModel[ModelV3](state=ModelV3(some_field="world", some_new_field=42.0))
-    doc = migrate(doc).to(ModelV5)
+    doc = migrate(doc, to=ModelV5)
     assert doc.state.schema_version == 5
     assert doc.state.some_field == "world"
     assert doc.state.some_new_field == 42.0
@@ -138,7 +138,7 @@ def test_downgrade_v5_to_v3():
             yet_another_field=100,
         )
     )
-    doc = migrate(doc).to(ModelV3)
+    doc = migrate(doc, to=ModelV3)
     assert doc.state.schema_version == 3
     assert doc.state.some_field == "world"
     assert doc.state.some_new_field == 42.0
@@ -153,7 +153,7 @@ def test_concurrent_edit_during_migration():
         state.some_field = "earth"
 
     # Migrate the original document to V5
-    doc_v5 = migrate(doc_v1).to(ModelV5)
+    doc_v5 = migrate(doc_v1, to=ModelV5)
     assert doc_v5.state.schema_version == 5
     assert doc_v5.state.some_field == "world"
     assert doc_v5.state.some_new_field == 42.0
