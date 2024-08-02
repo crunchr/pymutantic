@@ -92,7 +92,7 @@ class MutateInTransaction(typing.Generic[PydanticModel]):
     def __enter__(self) -> PydanticModel:
         root = self._mutant._root
         state = Munch(
-            self._mutant.ConcreteModel.model_validate(root.to_py()).model_dump()
+            self._mutant.PydanticModel.model_validate(root.to_py()).model_dump()
         )
         # Here we are lying to the type system - this is actually a ModelProxy
         # object, but since we went via model_validate -> model_dump it will match
@@ -120,7 +120,7 @@ class MutantModel(typing.Generic[PydanticModel]):
         state: PydanticModel | None = None,
     ):
         self._doc = Doc()
-        self._ConcreteModel = None
+        self._PydanticModel = None
 
         # Ensure only one of `update`, `updates`, or `state` is provided
         provided_args = [update is not None, bool(updates), state is not None]
@@ -168,7 +168,7 @@ class MutantModel(typing.Generic[PydanticModel]):
         """
         Get an instance of Model that represents the current state of the CRDT.
         """
-        return self.ConcreteModel.model_validate(self._root.to_py())
+        return self.PydanticModel.model_validate(self._root.to_py())
 
     def set_state(self, value: PydanticModel):
         """
@@ -180,23 +180,23 @@ class MutantModel(typing.Generic[PydanticModel]):
         self._doc[self.ROOT_KEY] = to_crdt(value)
 
     @property
-    def ConcreteModel(self):
+    def PydanticModel(self):
         """
-        Get the ConcreteModel pydantic model.
+        Get the PydanticModel pydantic model.
         """
-        if self._ConcreteModel is None:
+        if self._PydanticModel is None:
             assert hasattr(self, "__orig_class__")
             return typing.get_args(self.__orig_class__)[0]
         else:
-            return self._ConcreteModel
+            return self._PydanticModel
 
-    @ConcreteModel.setter
-    def ConcreteModel(self, value: typing.Type[BaseModel]):
+    @PydanticModel.setter
+    def PydanticModel(self, value):
         """
-        Set the ConcreteModel pydantic model.
+        Set the PydanticModel pydantic model.
 
-        Mostly the ConcreteModel should come from a type parameter
+        Mostly the PydanticModel should come from a type parameter
         e.g. MutantModel[MyModel] but sometimes the exact model might be
         dynamic, and so cannot be used as a type parameter.
         """
-        self._ConcreteModel = value
+        self._PydanticModel = value

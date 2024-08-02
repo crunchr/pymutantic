@@ -27,7 +27,7 @@ class ModelVersionRegistry:
 
     def migrate(self, instance: MutantModel, *, to: typing.Type[To]) -> MutantModel[To]:
 
-        from_version_index = self.model_versions.index(instance.ConcreteModel)
+        from_version_index = self.model_versions.index(instance.PydanticModel)
         to_version_index = self.model_versions.index(to)
 
         if from_version_index < to_version_index:
@@ -44,6 +44,6 @@ class ModelVersionRegistry:
                 state.schema_version += direction
 
         result = MutantModel[To](update=instance.update)
-        result.ConcreteModel = to
+        result.PydanticModel = to
 
         return result
