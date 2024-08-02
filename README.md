@@ -13,15 +13,15 @@ User-friendly tool for combining [pycrdt](https://github.com/jupyter-server/pycr
 
 The idea behind pymutantic is to provide views over the CRDT in the form of a pydantic model that you specify. There are two types of views:
 
-* **Read only**: Inspect the state of the underlying CRDT with a frozen version of the pydantic model you specify. This model is read only, any changes are not reflected back to the CRDT (TODO: find a way to make this actually mutable)
-* **Mutable**: Make granular mutations to the data using a typed and mutable view over the underlying CRDT. Operations on this view are automatically synced with the underlying CRDT. 
+* **Read only snapshot**: Inspect the state of the underlying CRDT with a frozen version of the pydantic model you specify. This model is read only, any changes are not reflected back to the CRDT (TODO: find a way to make this actually mutable)
+* **Mutable proxy**: Make granular mutations to the data using a typed and mutable view over the underlying CRDT. Operations on this view are automatically synced with the underlying CRDT. 
 
 ## Installation
 
 ```bash
 pip install pymutantic
 ```
-
+~~~~
 ## Usage
 
 ### `MutantModel`
@@ -76,10 +76,10 @@ initial_state = BlogPageConfig(
 doc = MutantModel[BlogPageConfig](state=initial_state)
 ```
 
-#### Get a read-only copy (in the form of an instance of the pydantic model you specified) using the `state` property:
+#### Get a snapshot (in the form of an instance of the pydantic model you specified) using the `state` property:
 
 ```python
-print(doc.state)
+print(doc.snapshot)
 ```
 
 ```text
@@ -97,8 +97,7 @@ BlogPageConfig(
 )
 ```
 
-NOTE: at present the state is not truly read-only since you can still make mutations, however since it is a copy any
-edits which are made to this copy are not reflected to the underlying CRDT.
+NOTE: This is simply a snaphot any edits which are made to this copy are not reflected to the underlying CRDT.
 
 #### Get a mutable view over the CRDT (in the form of an instance of the pydantic model you specified) and make granular edits using the `mutate` function
 
@@ -112,7 +111,7 @@ with doc.mutate() as state:
     ))
     state.posts[0].title = "First Post (Edited)"
 
-print(doc.state)
+print(doc.snapshot)
 ```
 
 ```
@@ -138,12 +137,12 @@ BlogPageConfig(
 
 NOTE: These edits are applied in bulk using a `Doc.transaction`
 
-#### Type check your code to prevent errors: 
+#### Type check your code to prevent errors:
 
 ```python
 empty_state = BlogPageConfig.model_validate({"collection": "empty", "posts": []})
 doc = MutantModel[BlogPageConfig](state=empty_state)
-doc.state.psts
+doc.snapshot.psts
 ```
 
 ```bash
@@ -171,7 +170,7 @@ doc = MutantModel[BlogPageConfig](update=received_binary_update_blob)
 #### Apply more binary updates, by setting the `update` property:
 
 ```python
-doc.update = another_received_binary_update_blob
+doc.apply_updates(another_received_binary_update_blob)
 ```
 
 ### `JsonPathMutator`
@@ -181,11 +180,12 @@ There is also a JsonPathMutator class which can be used to make edits to the doc
 ```python
 # Mutate the document
 from pycrdt_utils import JsonPathMutator
+
 with doc.mutate() as state:
     mutator = JsonPathMutator(state=state)
     mutator.set("$.posts[0].title", "Updated First Post")
 
-print(doc.state)
+print(doc.snapshot)
 ```
 
 ### `ModelVersionRegistry` (experimental)
@@ -233,7 +233,7 @@ with edit.mutate() as state:
 
 # Migrate and apply the independent edit
 doc = migrate(doc, to=ModelV2)
-doc.update = edit.update
+doc.update.apply_updates(edit.update)
 ```
 
 ```text

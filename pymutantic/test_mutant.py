@@ -33,8 +33,8 @@ class BlogPageConfig(BaseModel):
 def test_empty_initial_state():
     empty_state = BlogPageConfig.model_validate({"collection": "empty", "posts": []})
     doc = MutantModel[BlogPageConfig](state=empty_state)
-    assert doc.state.collection == "empty"
-    assert len(doc.state.posts) == 0
+    assert doc.snapshot.collection == "empty"
+    assert len(doc.snapshot.posts) == 0
 
 
 def test_initial_state():
@@ -54,9 +54,9 @@ def test_initial_state():
     )
 
     doc = MutantModel[BlogPageConfig](state=initial_state)
-    assert doc.state.collection == "tech"
-    assert len(doc.state.posts) == 1
-    assert doc.state.posts[0].title == "First Post"
+    assert doc.snapshot.collection == "tech"
+    assert len(doc.snapshot.posts) == 1
+    assert doc.snapshot.posts[0].title == "First Post"
 
 
 def test_single_post_initial_state():
@@ -75,10 +75,10 @@ def test_single_post_initial_state():
         }
     )
     doc = MutantModel[BlogPageConfig](state=initial_state)
-    assert doc.state.collection == "tech"
-    assert len(doc.state.posts) == 1
-    assert doc.state.posts[0].title == "First Post"
-    assert doc.state.posts[0].author.name == "Author One"
+    assert doc.snapshot.collection == "tech"
+    assert len(doc.snapshot.posts) == 1
+    assert doc.snapshot.posts[0].title == "First Post"
+    assert doc.snapshot.posts[0].author.name == "Author One"
 
 
 def test_add_post():
@@ -94,9 +94,9 @@ def test_add_post():
                 comments=[],
             )
         )
-    assert len(doc.state.posts) == 1
-    assert doc.state.posts[0].title == "New Post"
-    assert doc.state.posts[0].author.name == "Author One"
+    assert len(doc.snapshot.posts) == 1
+    assert doc.snapshot.posts[0].title == "New Post"
+    assert doc.snapshot.posts[0].author.name == "Author One"
 
 
 def test_add_comment():
@@ -123,9 +123,9 @@ def test_add_comment():
                 content="Nice post!",
             )
         )
-    assert len(doc.state.posts[0].comments) == 1
-    assert doc.state.posts[0].comments[0].content == "Nice post!"
-    assert doc.state.posts[0].comments[0].author.name == "Author Two"
+    assert len(doc.snapshot.posts[0].comments) == 1
+    assert doc.snapshot.posts[0].comments[0].content == "Nice post!"
+    assert doc.snapshot.posts[0].comments[0].author.name == "Author Two"
 
 
 def test_update_title():
@@ -146,7 +146,7 @@ def test_update_title():
     doc = MutantModel[BlogPageConfig](state=initial_state)
     with doc.mutate() as state:
         state.posts[0].title = "Updated First Post"
-    assert doc.state.posts[0].title == "Updated First Post"
+    assert doc.snapshot.posts[0].title == "Updated First Post"
 
 
 def test_mutual_exclusivity_check():
@@ -201,9 +201,9 @@ def test_update_state():
         )
         state.posts[0].title = "First Post (Edited)"
 
-    assert doc2.state.posts[0].title == "First Post (Edited)"
-    assert len(doc2.state.posts[0].comments) == 1
-    assert doc2.state.posts[0].comments[0].content == "Nice post!"
+    assert doc2.snapshot.posts[0].title == "First Post (Edited)"
+    assert len(doc2.snapshot.posts[0].comments) == 1
+    assert doc2.snapshot.posts[0].comments[0].content == "Nice post!"
 
 
 def test_merge_updates():
@@ -252,10 +252,10 @@ def test_merge_updates():
     # Merge edits
     doc4 = MutantModel[BlogPageConfig](updates=(doc2.update, doc3.update))
 
-    assert len(doc4.state.posts) == 2
-    assert len(doc4.state.posts[0].comments) == 1
-    assert doc4.state.posts[0].comments[0].content == "Nice post!"
-    assert doc4.state.posts[1].title == "Second Post"
+    assert len(doc4.snapshot.posts) == 2
+    assert len(doc4.snapshot.posts[0].comments) == 1
+    assert doc4.snapshot.posts[0].comments[0].content == "Nice post!"
+    assert doc4.snapshot.posts[1].title == "Second Post"
 
 
 def test_array_append():
@@ -273,8 +273,8 @@ def test_array_append():
             )
         )
 
-    assert len(doc.state.posts) == 1
-    assert doc.state.posts[0].title == "First Post"
+    assert len(doc.snapshot.posts) == 1
+    assert doc.snapshot.posts[0].title == "First Post"
 
 
 def test_array_setitem():
@@ -303,7 +303,7 @@ def test_array_setitem():
             comments=[],
         )
 
-    assert doc.state.posts[0].title == "Updated Post"
+    assert doc.snapshot.posts[0].title == "Updated Post"
 
 
 def test_array_extend():
@@ -330,8 +330,8 @@ def test_array_extend():
             ]
         )
 
-    assert len(doc.state.posts) == 2
-    assert doc.state.posts[1].title == "Second Post"
+    assert len(doc.snapshot.posts) == 2
+    assert doc.snapshot.posts[1].title == "Second Post"
 
 
 def test_array_clear():
@@ -354,7 +354,7 @@ def test_array_clear():
     with doc.mutate() as state:
         state.posts.clear()
 
-    assert len(doc.state.posts) == 0
+    assert len(doc.snapshot.posts) == 0
 
 
 def test_array_insert():
@@ -373,8 +373,8 @@ def test_array_insert():
             ),
         )
 
-    assert len(doc.state.posts) == 1
-    assert doc.state.posts[0].title == "First Post"
+    assert len(doc.snapshot.posts) == 1
+    assert doc.snapshot.posts[0].title == "First Post"
 
 
 def test_array_pop():
@@ -397,7 +397,7 @@ def test_array_pop():
     with doc.mutate() as state:
         state.posts.pop()
 
-    assert len(doc.state.posts) == 0
+    assert len(doc.snapshot.posts) == 0
 
 
 def test_array_delitem():
@@ -420,7 +420,7 @@ def test_array_delitem():
     with doc.mutate() as state:
         del state.posts[0]
 
-    assert len(doc.state.posts) == 0
+    assert len(doc.snapshot.posts) == 0
 
 
 if __name__ == "__main__":

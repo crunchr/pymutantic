@@ -130,12 +130,11 @@ class MutantModel(typing.Generic[PydanticModel]):
             )
 
         if update is not None:
-            self.update = update
+            self.apply_updates(update)
         if updates:
-            for update in updates:
-                self.update = update
+            self.apply_updates(*updates)
         if state is not None:
-            self.state = state
+            self.set_state(state)
 
     @property
     def _root(self):
@@ -151,12 +150,12 @@ class MutantModel(typing.Generic[PydanticModel]):
         """
         return self._doc.get_update()
 
-    @update.setter
-    def update(self, value: bytes):
+    def apply_updates(self, *values: bytes):
         """
         Apply a binary update blob.
         """
-        self._doc.apply_update(value)
+        for value in values:
+            self._doc.apply_update(value)
 
     def mutate(self) -> MutateInTransaction[PydanticModel]:
         """
@@ -165,14 +164,13 @@ class MutantModel(typing.Generic[PydanticModel]):
         return MutateInTransaction(self)
 
     @property
-    def state(self) -> PydanticModel:
+    def snapshot(self) -> PydanticModel:
         """
         Get an instance of Model that represents the current state of the CRDT.
         """
         return self.ConcreteModel.model_validate(self._root.to_py())
 
-    @state.setter
-    def state(self, value: PydanticModel):
+    def set_state(self, value: PydanticModel):
         """
         Set the current state of the CRDT from an instance Model.
 

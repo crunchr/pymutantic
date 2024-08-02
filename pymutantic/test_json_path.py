@@ -50,7 +50,7 @@ def test_json_path_set():
         mutator = JsonPathMutator(state=state)
         mutator.set("$.posts[0].title", "Updated First Post")
 
-    assert doc.state.posts[0].title == "Updated First Post"
+    assert doc.snapshot.posts[0].title == "Updated First Post"
 
 
 def test_json_path_append():
@@ -79,8 +79,8 @@ def test_json_path_append():
             ),
         )
 
-    assert len(doc.state.posts[0].comments) == 1
-    assert doc.state.posts[0].comments[0].content == "Nice post!"
+    assert len(doc.snapshot.posts[0].comments) == 1
+    assert doc.snapshot.posts[0].comments[0].content == "Nice post!"
 
 
 def test_json_path_insert():
@@ -110,8 +110,8 @@ def test_json_path_insert():
             ),
         )
 
-    assert len(doc.state.posts[0].comments) == 1
-    assert doc.state.posts[0].comments[0].content == "First comment!"
+    assert len(doc.snapshot.posts[0].comments) == 1
+    assert doc.snapshot.posts[0].comments[0].content == "First comment!"
 
 
 def test_json_path_pop():
@@ -139,7 +139,7 @@ def test_json_path_pop():
         mutator = JsonPathMutator(state=state)
         mutator.pop("$.posts[0].comments", 0)
 
-    assert len(doc.state.posts[0].comments) == 0
+    assert len(doc.snapshot.posts[0].comments) == 0
 
 
 def test_json_path_delete():
@@ -161,7 +161,7 @@ def test_json_path_delete():
         mutator = JsonPathMutator(state=state)
         mutator.delete("$.posts[0]")
 
-    assert len(doc.state.posts) == 0
+    assert len(doc.snapshot.posts) == 0
 
 
 def test_multiple_json_path_edits():
@@ -195,9 +195,9 @@ def test_multiple_json_path_edits():
         )
         mutator.set("$.posts[0].title", "First Post (Edited)")
 
-    assert len(doc.state.posts[0].comments) == 1
-    assert doc.state.posts[0].comments[0].content == "Nice post!"
-    assert doc.state.posts[0].title == "First Post (Edited)"
+    assert len(doc.snapshot.posts[0].comments) == 1
+    assert doc.snapshot.posts[0].comments[0].content == "Nice post!"
+    assert doc.snapshot.posts[0].title == "First Post (Edited)"
 
 
 def test_invalid_json_path():
@@ -268,8 +268,8 @@ def test_multiple_edits_to_different_fields():
         mutator.set("$.collection", "updated_collection")
         mutator.set("$.posts[0].content", "Updated content of the first post.")
 
-    assert doc.state.collection == "updated_collection"
-    assert doc.state.posts[0].content == "Updated content of the first post."
+    assert doc.snapshot.collection == "updated_collection"
+    assert doc.snapshot.posts[0].content == "Updated content of the first post."
 
 
 def test_merge_independent_edits():
@@ -317,9 +317,9 @@ def test_merge_independent_edits():
     doc4 = MutantModel[BlogPageConfig](updates=(doc2.update, doc3.update))
 
     # Verify the merged state
-    assert len(doc4.state.posts[0].comments) == 1
-    assert doc4.state.posts[0].comments[0].content == "Nice post!"
-    assert doc4.state.posts[0].title == "First Post (Edited)"
+    assert len(doc4.snapshot.posts[0].comments) == 1
+    assert doc4.snapshot.posts[0].comments[0].content == "Nice post!"
+    assert doc4.snapshot.posts[0].title == "First Post (Edited)"
 
 
 def test_edit_element_in_list():
@@ -349,9 +349,9 @@ def test_edit_element_in_list():
         mutator = JsonPathMutator(state)
         mutator.set("$.posts[0].comments[0].content", "Edited comment content")
 
-    assert len(doc.state.posts[0].comments) == 1
-    assert doc.state.posts[0].comments[0].content == "Edited comment content"
-    assert doc.state.posts[0].comments[0].author.name == "Author Two"
+    assert len(doc.snapshot.posts[0].comments) == 1
+    assert doc.snapshot.posts[0].comments[0].content == "Edited comment content"
+    assert doc.snapshot.posts[0].comments[0].author.name == "Author Two"
 
 
 def test_edit_list_item_directly():
@@ -395,9 +395,9 @@ def test_edit_list_item_directly():
             },
         )
 
-    assert len(doc.state.posts[0].comments) == 2
-    assert doc.state.posts[0].comments[1].content == "Updated comment content."
-    assert doc.state.posts[0].comments[1].author.name == "Author Three"
+    assert len(doc.snapshot.posts[0].comments) == 2
+    assert doc.snapshot.posts[0].comments[1].content == "Updated comment content."
+    assert doc.snapshot.posts[0].comments[1].author.name == "Author Three"
 
 
 if __name__ == "__main__":
