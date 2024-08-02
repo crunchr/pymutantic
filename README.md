@@ -1,6 +1,6 @@
 ![pymutantic](logo.png)
 
-User-friendly tool for combining [pycrdt](https://github.com/jupyter-server/pycrdt) for efficient concurrent content editing and [pydantic](https://docs.pydantic.dev/latest/) for type safety and developer experience.
+User-friendly tool for combining [pycrdt](https://github.com/jupyter-server/pycrdt) for efficient concurrent content editing and [pydantic](https://docs.pydantic.dev/latest/) for type safety and a pleasant developer experience.
 
 ## Overview
 
@@ -75,7 +75,7 @@ initial_state = BlogPageConfig(
 doc = MutantModel[BlogPageConfig](state=initial_state)
 ```
 
-#### Get an immutable view (in the form of an instance of the pydantic model you specified) using the `state` property:
+#### Get a read-only copy (in the form of an instance of the pydantic model you specified) using the `state` property:
 
 ```python
 print(doc.state)
@@ -96,7 +96,10 @@ BlogPageConfig(
 )
 ```
 
-#### Make granular edits with the `mutate` function (applied within a transaction):
+NOTE: at present the state is not truly read-only since you can still make mutations, however since it is a copy any
+edits which are made to this copy are not reflected to the underlying CRDT.
+
+#### Get a mutable view over the CRDT (in the form of an instance of the pydantic model you specified) and make granular edits using the `mutate` function
 
 ```python
 # Mutate the document
@@ -131,6 +134,8 @@ BlogPageConfig(
     ]
 )
 ```
+
+NOTE: These edits are applied in bulk using a `Doc.transaction`
 
 #### Type check your code to prevent errors: 
 
