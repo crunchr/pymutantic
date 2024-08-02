@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pymutantic"
-version = "0.5.0"
+version = "0.6.0"
 description = ""
 authors = ["Daniel Bradburn <daniel.bradburn@crunchr.com>"]
 readme = "README.md"
@@ -11,15 +11,14 @@ pycrdt = "^0.9.7"
 pydantic = "^2.8.2"
 munch = "^4.0.0"
 jsonpath-ng = "^1.6.1"
-black = "^24.4.2"
 toolz = "^0.12.1"
 
 
 [tool.poetry.group.dev.dependencies]
-black = "^24.4.2"
 isort = "^5.13.2"
 mypy = "^1.11.1"
 pytest = "^8.3.2"
+black = "^24.4.2"
 
 [build-system]
 requires = ["poetry-core"]
