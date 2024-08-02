@@ -1,8 +1,7 @@
-<div style="text-align: center">
-  <img src="logo.png" alt="pymutantic">
-</div>
+![pymutantic](logo.png)
 
 User-friendly tool for combining [pycrdt](https://github.com/jupyter-server/pycrdt) for efficient concurrent content editing and [pydantic](https://docs.pydantic.dev/latest/) for type safety and a pleasant developer experience.
+
 
 ## Overview
 
