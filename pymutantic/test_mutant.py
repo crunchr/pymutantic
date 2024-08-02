@@ -3,7 +3,7 @@ import pytest
 from pydantic import BaseModel, Field
 
 # 1st party
-from pymutantic.mutant import MutantModel
+from pymutantic import MutantModel
 
 
 class Author(BaseModel):

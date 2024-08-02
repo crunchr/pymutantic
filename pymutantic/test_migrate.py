@@ -6,8 +6,7 @@ import pytest
 from pydantic import BaseModel
 
 # 1st party
-from pymutantic.migrate import ModelVersionRegistry
-from pymutantic.mutant import MutantModel
+from pymutantic import ModelVersionRegistry, MutantModel
 
 
 class ModelV1(BaseModel):

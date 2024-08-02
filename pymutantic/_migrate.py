@@ -3,7 +3,7 @@ import dataclasses
 import typing
 
 # 1st party
-from pymutantic.mutant import MutantModel
+from pymutantic._mutant import MutantModel
 
 
 class VersionProtocol(typing.Protocol):

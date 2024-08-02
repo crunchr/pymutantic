@@ -5,9 +5,9 @@ User-friendly tool for combining [pycrdt](https://github.com/jupyter-server/pycr
 
 ## Overview
 
-* `pymutantic.mutant.MutantModel` - A type safe `pycrdt.Doc` ⟷ pydantic `pydantic.BaseModel` mapping with granular editing.
-* `pymutantic.json_path.JsonPathMutator` - Make edits using json path.
-* `pymutantic.migrate.ModelVersionRegistry` - Store a chain of versions for making granular schema migration edits.
+* `pymutantic.MutantModel` - A type safe `pycrdt.Doc` ⟷ pydantic `pydantic.BaseModel` mapping with granular editing.
+* `pymutantic.JsonPathMutator` - Make edits using json path.
+* `pymutantic.ModelVersionRegistry` - Store a chain of versions for making granular schema migration edits.
 
 ### Why do I want this?
 
@@ -56,7 +56,7 @@ class BlogPageConfig(BaseModel):
 #### Create pycrdt documents from instances of that model using the `state` constructor parameter:
 
 ```python
-from pycrdt_utils import MutantModel
+from pymutantic import MutantModel
 
 # Define the initial state
 initial_state = BlogPageConfig(
@@ -179,7 +179,7 @@ There is also a JsonPathMutator class which can be used to make edits to the doc
 
 ```python
 # Mutate the document
-from pycrdt_utils import JsonPathMutator
+from pymutantic import JsonPathMutator
 
 with doc.mutate() as state:
     mutator = JsonPathMutator(state=state)
@@ -220,7 +220,7 @@ class ModelV2(BaseModel):
         new_state.field = "default"
 
 
-from pymutantic.migrate import ModelVersionRegistry
+from pymutantic import ModelVersionRegistry
 
 migrate = ModelVersionRegistry([ModelV1, ModelV2])
 

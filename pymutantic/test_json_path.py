@@ -3,8 +3,7 @@ import pytest
 from pydantic import BaseModel, Field
 
 # 1st party
-from pymutantic.json_path import JsonPathMutator
-from pymutantic.mutant import MutantModel
+from pymutantic import JsonPathMutator, MutantModel
 
 
 class Author(BaseModel):
