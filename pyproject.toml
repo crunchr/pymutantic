@@ -8,16 +8,18 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.11"
 pycrdt = "^0.9.7"
-jsonpatch = "^1.33"
 pydantic = "^2.8.2"
 munch = "^4.0.0"
-pytest = "^8.3.2"
 jsonpath-ng = "^1.6.1"
 black = "^24.4.2"
 toolz = "^0.12.1"
-mypy = "^1.11.1"
-isort = "^5.13.2"
 
+
+[tool.poetry.group.dev.dependencies]
+black = "^24.4.2"
+isort = "^5.13.2"
+mypy = "^1.11.1"
+pytest = "^8.3.2"
 
 [build-system]
 requires = ["poetry-core"]

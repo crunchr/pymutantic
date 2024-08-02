@@ -23,5 +23,4 @@ git push origin HEAD
 
 # build and publish to pypi
 echo "build and publish to pypi"
-poetry build
-poetry publish
+poetry build && poetry publish
