@@ -21,7 +21,7 @@ The idea behind pymutantic is to provide views over the CRDT in the form of a py
 ```bash
 pip install pymutantic
 ```
-~~~~
+
 ## Usage
 
 ### `MutantModel`
